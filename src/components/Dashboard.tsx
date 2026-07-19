@@ -14,6 +14,7 @@ import {
   Trash2,
   AlertTriangle
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface DashboardProps {
   schools: School[];
@@ -108,13 +109,13 @@ export default function Dashboard({
     });
   }, [timeSlots, activeDayOfWeekNum, selectedShift]);
 
-  // Auto-select the first class-group from dayClasses when it changes
+  // Reset selection if the selected class-group no longer exists on this day/filter, otherwise preserve
   React.useEffect(() => {
     if (dayClasses.length > 0) {
       const stillExists = dayClasses.some(slot => slot.classGroupId === selectedClassGroupId);
       if (!stillExists) {
-        setSelectedClassGroupId(dayClasses[0].classGroupId);
-        setSelectedSubjectId(dayClasses[0].subjectId);
+        setSelectedClassGroupId(null);
+        setSelectedSubjectId(null);
       }
     } else {
       setSelectedClassGroupId(null);
@@ -274,10 +275,10 @@ export default function Dashboard({
         </div>
       </div>
 
-      {/* Main Grid Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Today's Schedule (Left 7 Columns) */}
-        <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
+      {/* Main Content (Full Width) */}
+      <div className="w-full">
+        {/* Today's Schedule */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
             <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
               <Clock size={20} className="text-indigo-600" />
@@ -384,245 +385,283 @@ export default function Dashboard({
             )}
           </div>
         </div>
+      </div>
 
-        {/* Class Activities & Scheduling (Right 5 Columns) */}
-        <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
-          {!selectedClassGroupId ? (
-            <div className="bg-slate-50 rounded-2xl border border-slate-100 p-8 text-center space-y-3">
-              <ClipboardList size={32} className="text-slate-400 mx-auto" />
-              <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                Nenhuma turma selecionada. Clique em uma aula ao lado para visualizar e agendar atividades.
-              </p>
-            </div>
-          ) : (
-            (() => {
-            const selectedClass = classes.find(c => c.id === selectedClassGroupId);
-            const classActivities = activities.filter(a => 
-              a.dueDate === selectedDate && 
-              (a.classGroupId === selectedClassGroupId || (a.classGroupIds && a.classGroupIds.includes(selectedClassGroupId)))
-            );
+      {/* Overlay Modal for Class Activities & Scheduling */}
+      <AnimatePresence>
+        {selectedClassGroupId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setSelectedClassGroupId(null);
+                setShowAddForm(false);
+              }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs cursor-pointer"
+            />
 
-            return (
-              <>
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="min-w-0">
-                    <span className="block text-[10px] font-bold text-indigo-500 uppercase tracking-wider font-mono">Turma Selecionada</span>
-                    <h3 className="text-sm font-extrabold text-slate-800 truncate">
-                      {selectedClass?.name || 'Turma'}
-                    </h3>
-                  </div>
-                  
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button
-                      onClick={() => setShowAddForm(prev => !prev)}
-                      className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                        showAddForm
-                          ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100'
-                          : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-100/60'
-                      }`}
-                    >
-                      {showAddForm ? <X size={14} /> : <Plus size={14} />}
-                      <span>{showAddForm ? 'Cancelar' : 'Agendar'}</span>
-                    </button>
-                  </div>
-                </div>
+            {/* Modal Box */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white w-full max-w-lg rounded-3xl border border-slate-200/80 shadow-2xl relative z-10 flex flex-col max-h-[85vh] overflow-hidden"
+            >
+              {(() => {
+                const selectedClass = classes.find(c => c.id === selectedClassGroupId);
+                const associatedSchool = selectedClass ? schools.find(s => s.id === selectedClass.schoolId) : null;
+                const schoolPalette = associatedSchool ? getPaletteColor(associatedSchool.color) : COLOR_PALETTE[0];
+                const classActivities = activities.filter(a => 
+                  a.dueDate === selectedDate && 
+                  (a.classGroupId === selectedClassGroupId || (a.classGroupIds && a.classGroupIds.includes(selectedClassGroupId)))
+                );
 
-                {showAddForm ? (
-                  <form onSubmit={handleCreateActivityInline} className="space-y-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                    <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider font-sans mb-1">
-                      Agendar Atividade / Evento
-                    </h4>
-
-                    {/* Title */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Título *</label>
-                      <input
-                        type="text"
-                        placeholder="Ex: Prova Mensal, Trabalho, etc."
-                        required
-                        value={newActTitle}
-                        onChange={e => setNewActTitle(e.target.value)}
-                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2.5">
-                      {/* Type */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tipo</label>
-                        <select
-                          value={newActType}
-                          onChange={e => setNewActType(e.target.value as any)}
-                          className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden"
-                        >
-                          <option value="Avaliação">Avaliação 📝</option>
-                          <option value="Trabalho">Trabalho 📁</option>
-                          <option value="Tarefa">Tarefa 🏠</option>
-                          <option value="Lembrete">Lembrete 🔔</option>
-                        </select>
+                return (
+                  <>
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-slate-100 p-5 bg-slate-50/50">
+                      <div className="min-w-0 pr-4">
+                        <span className="block text-[10px] font-bold text-indigo-500 uppercase tracking-wider font-mono">Agendamentos</span>
+                        <h3 className="text-base font-extrabold text-slate-800 truncate">
+                          {selectedClass?.name || 'Turma'}
+                        </h3>
+                        {associatedSchool && (
+                          <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1.5 mt-0.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${schoolPalette.bg}`} />
+                            <span className="truncate">{associatedSchool.name}</span>
+                          </div>
+                        )}
                       </div>
-
-                      {/* Priority */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Prioridade</label>
-                        <select
-                          value={newActPriority}
-                          onChange={e => setNewActPriority(e.target.value as any)}
-                          className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden"
-                        >
-                          <option value="Alta">Alta 🔴</option>
-                          <option value="Média">Média 🟡</option>
-                          <option value="Baixa">Baixa 🔵</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2.5">
-                      {/* Subject */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Disciplina *</label>
-                        <select
-                          value={newActSubjectId}
-                          onChange={e => setNewActSubjectId(e.target.value)}
-                          className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden"
-                        >
-                          {subjects.map(s => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Due Date */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data *</label>
-                        <input
-                          type="date"
-                          required
-                          value={newActDueDate}
-                          onChange={e => setNewActDueDate(e.target.value)}
-                          className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-sans text-slate-700 focus:outline-hidden"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Descrição (opcional)</label>
-                      <textarea
-                        rows={2}
-                        placeholder="Páginas do livro, detalhes, etc."
-                        value={newActDescription}
-                        onChange={e => setNewActDescription(e.target.value)}
-                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
-                      />
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setShowAddForm(false)}
-                        className="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-all cursor-pointer"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-3.5 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all cursor-pointer shadow-2xs"
-                      >
-                        Salvar
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="space-y-3">
-                    {classActivities.length === 0 ? (
-                      <div className="bg-slate-50/50 rounded-2xl border border-slate-100 p-8 text-center space-y-2">
-                        <p className="text-slate-400 text-xs font-medium leading-relaxed">
-                          Nenhuma avaliação, trabalho ou tarefa agendada para esta turma nesta data.
-                        </p>
+                      
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <button
-                          onClick={() => setShowAddForm(true)}
-                          className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+                          onClick={() => setShowAddForm(prev => !prev)}
+                          className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                            showAddForm
+                              ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100'
+                              : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-100/60'
+                          }`}
                         >
-                          <Plus size={12} />
-                          Agendar Atividade
+                          {showAddForm ? <X size={14} /> : <Plus size={14} />}
+                          <span>{showAddForm ? 'Cancelar' : 'Agendar'}</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setSelectedClassGroupId(null);
+                            setShowAddForm(false);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+                        >
+                          <X size={18} />
                         </button>
                       </div>
-                    ) : (
-                      classActivities.map(act => {
-                        const associatedSubject = subjects.find(s => s.id === act.subjectId);
-                        const isUrgent = act.priority === 'Alta';
-                        const subjectPalette = associatedSubject ? getPaletteColor(associatedSubject.color) : COLOR_PALETTE[0];
+                    </div>
 
-                        return (
-                          <div
-                            key={act.id}
-                            className={`p-4 rounded-2xl border transition-all flex items-start justify-between gap-3 ${
-                              act.completed 
-                                ? 'bg-slate-50/50 border-slate-100 opacity-60' 
-                                : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50/20 shadow-2xs'
-                            }`}
-                          >
-                            <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                              <button
-                                onClick={() => handleToggleComplete(act.id)}
-                                className="mt-0.5 text-slate-300 hover:text-indigo-500 transition-all focus:outline-hidden flex-shrink-0 cursor-pointer"
+                    {/* Scrollable Body */}
+                    <div className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 max-h-[60vh]">
+                      {showAddForm ? (
+                        <form onSubmit={handleCreateActivityInline} className="space-y-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                          <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider font-sans mb-1">
+                            Agendar Atividade / Evento
+                          </h4>
+
+                          {/* Title */}
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Título *</label>
+                            <input
+                              type="text"
+                              placeholder="Ex: Prova Mensal, Trabalho, etc."
+                              required
+                              value={newActTitle}
+                              onChange={e => setNewActTitle(e.target.value)}
+                              className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-hidden focus:ring-1 focus:ring-indigo-500 text-slate-800 font-sans"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {/* Type */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tipo</label>
+                              <select
+                                value={newActType}
+                                onChange={e => setNewActType(e.target.value as any)}
+                                className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden"
                               >
-                                <div className="w-5 h-5 rounded-md border-2 border-slate-200 hover:border-indigo-400 transition-all bg-white flex items-center justify-center">
-                                  {act.completed && <Check size={14} className="text-indigo-600 font-extrabold" />}
-                                </div>
-                              </button>
-
-                              <div className="min-w-0 flex-1 space-y-1">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-sm ${
-                                    isUrgent ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-slate-100 text-slate-600 border border-slate-200/60'
-                                  }`}>
-                                    {act.type}
-                                  </span>
-                                  <span className="text-[9px] text-slate-400 font-mono">
-                                    {act.priority} prioridade
-                                  </span>
-                                </div>
-
-                                <h4 className={`font-extrabold text-slate-800 text-xs leading-snug break-words ${act.completed ? 'line-through text-slate-400' : ''}`}>
-                                  {act.title}
-                                </h4>
-
-                                {act.description && (
-                                  <p className="text-[11px] text-slate-500 leading-normal break-words">
-                                    {act.description}
-                                  </p>
-                                )}
-
-                                <div className="flex flex-wrap items-center gap-1.5 text-[9px] text-slate-400">
-                                  <span className={`w-1.5 h-1.5 rounded-full ${subjectPalette.bg}`} />
-                                  <span className="truncate">
-                                    {associatedSubject?.name}
-                                  </span>
-                                </div>
-                              </div>
+                                <option value="Avaliação">Avaliação 📝</option>
+                                <option value="Trabalho">Trabalho 📁</option>
+                                <option value="Tarefa">Tarefa 🏠</option>
+                                <option value="Lembrete">Lembrete 🔔</option>
+                              </select>
                             </div>
 
+                            {/* Priority */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Prioridade</label>
+                              <select
+                                value={newActPriority}
+                                onChange={e => setNewActPriority(e.target.value as any)}
+                                className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden"
+                              >
+                                <option value="Alta">Alta 🔴</option>
+                                <option value="Média">Média 🟡</option>
+                                <option value="Baixa">Baixa 🔵</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {/* Subject */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Disciplina *</label>
+                              <select
+                                value={newActSubjectId}
+                                onChange={e => setNewActSubjectId(e.target.value)}
+                                className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden"
+                              >
+                                {subjects.map(s => (
+                                  <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Due Date */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data *</label>
+                              <input
+                                type="date"
+                                required
+                                value={newActDueDate}
+                                onChange={e => setNewActDueDate(e.target.value)}
+                                className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-sans text-slate-700 focus:outline-hidden"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Description */}
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Descrição (opcional)</label>
+                            <textarea
+                              rows={2}
+                              placeholder="Páginas do livro, detalhes, etc."
+                              value={newActDescription}
+                              onChange={e => setNewActDescription(e.target.value)}
+                              className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-hidden focus:ring-1 focus:ring-indigo-500 text-slate-800"
+                            />
+                          </div>
+
+                          <div className="flex justify-end gap-2 pt-1">
                             <button
-                              onClick={() => handleDeleteActivity(act.id)}
-                              className="text-slate-400 hover:text-rose-500 p-1 rounded-md hover:bg-rose-50 transition-all cursor-pointer flex-shrink-0"
-                              title="Remover Atividade"
+                              type="button"
+                              onClick={() => setShowAddForm(false)}
+                              className="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-all cursor-pointer"
                             >
-                              <Trash2 size={13} />
+                              Cancelar
+                            </button>
+                            <button
+                              type="submit"
+                              className="px-3.5 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all cursor-pointer shadow-2xs"
+                            >
+                              Salvar
                             </button>
                           </div>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
-              </>
-            );
-            })()
-          )}
-        </div>
-      </div>
+                        </form>
+                      ) : (
+                        <div className="space-y-3">
+                          {classActivities.length === 0 ? (
+                            <div className="bg-slate-50/50 rounded-2xl border border-slate-100 p-8 text-center space-y-2">
+                              <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                                Nenhuma avaliação, trabalho ou tarefa agendada para esta turma nesta data.
+                              </p>
+                              <button
+                                onClick={() => setShowAddForm(true)}
+                                className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+                              >
+                                <Plus size={12} />
+                                Agendar Atividade
+                              </button>
+                            </div>
+                          ) : (
+                            classActivities.map(act => {
+                              const associatedSubject = subjects.find(s => s.id === act.subjectId);
+                              const isUrgent = act.priority === 'Alta';
+                              const subjectPalette = associatedSubject ? getPaletteColor(associatedSubject.color) : COLOR_PALETTE[0];
+
+                              return (
+                                <div
+                                  key={act.id}
+                                  className={`p-4 rounded-2xl border transition-all flex items-start justify-between gap-3 ${
+                                    act.completed 
+                                      ? 'bg-slate-50/50 border-slate-100 opacity-60' 
+                                      : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50/20 shadow-2xs'
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                                    <button
+                                      onClick={() => handleToggleComplete(act.id)}
+                                      className="mt-0.5 text-slate-300 hover:text-indigo-500 transition-all focus:outline-hidden flex-shrink-0 cursor-pointer"
+                                    >
+                                      <div className="w-5 h-5 rounded-md border-2 border-slate-200 hover:border-indigo-400 transition-all bg-white flex items-center justify-center">
+                                        {act.completed && <Check size={14} className="text-indigo-600 font-extrabold" />}
+                                      </div>
+                                    </button>
+
+                                    <div className="min-w-0 flex-1 space-y-1">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-sm ${
+                                          isUrgent ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-slate-100 text-slate-600 border border-slate-200/60'
+                                        }`}>
+                                          {act.type}
+                                        </span>
+                                        <span className="text-[9px] text-slate-400 font-mono">
+                                          {act.priority} prioridade
+                                        </span>
+                                      </div>
+
+                                      <h4 className={`font-extrabold text-slate-800 text-xs leading-snug break-words ${act.completed ? 'line-through text-slate-400' : ''}`}>
+                                        {act.title}
+                                      </h4>
+
+                                      {act.description && (
+                                        <p className="text-[11px] text-slate-500 leading-normal break-words">
+                                          {act.description}
+                                        </p>
+                                      )}
+
+                                      <div className="flex flex-wrap items-center gap-1.5 text-[9px] text-slate-400">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${subjectPalette.bg}`} />
+                                        <span className="truncate">
+                                          {associatedSubject?.name}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    onClick={() => handleDeleteActivity(act.id)}
+                                    className="text-slate-400 hover:text-rose-500 p-1 rounded-md hover:bg-rose-50 transition-all cursor-pointer flex-shrink-0"
+                                    title="Remover Atividade"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
