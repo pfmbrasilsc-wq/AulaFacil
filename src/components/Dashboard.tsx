@@ -161,7 +161,7 @@ export default function Dashboard({
       return;
     }
     if (!newActSubjectId) {
-      alert('Por favor, selecione uma disciplina.');
+      alert('Por favor, selecione um componente curricular.');
       return;
     }
 
@@ -303,7 +303,7 @@ export default function Dashboard({
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {dayClasses.length === 0 ? (
               <div className="bg-slate-50 rounded-2xl border border-slate-100 p-8 text-center space-y-2">
                 <p className="text-slate-400 text-sm font-medium">
@@ -340,7 +340,7 @@ export default function Dashboard({
                       setSelectedClassGroupId(slot.classGroupId);
                       setSelectedSubjectId(slot.subjectId);
                     }}
-                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 shadow-2xs cursor-pointer select-none active:scale-[0.99] hover:shadow-xs ${
+                    className={`py-2 px-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 shadow-2xs cursor-pointer select-none active:scale-[0.99] hover:shadow-xs ${
                       isSelected
                         ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50/25'
                         : hasActivityToday
@@ -348,36 +348,38 @@ export default function Dashboard({
                         : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50/30'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       {/* Left colored border */}
-                      <div className={`w-3.5 h-12 rounded-lg ${subjectPalette.bg}`} />
-                      <div>
+                      <div className={`w-2.5 h-9 rounded-md flex-shrink-0 ${subjectPalette.bg}`} />
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`text-xs font-extrabold ${subjectPalette.text}`}>
-                            {associatedSubject?.name}
-                          </span>
-                          <span className="text-[10px] bg-slate-50 text-slate-500 font-semibold px-2 py-0.5 rounded-md border border-slate-100">
+                          <h4 className="font-extrabold text-slate-800 text-xs truncate leading-tight">
+                            {associatedClass?.name}
+                          </h4>
+                          <span className="text-[9px] bg-slate-100 text-slate-500 font-bold px-1.5 py-0.5 rounded-sm flex-shrink-0">
                             {slot.slotNumber}ª Aula
                           </span>
-                        </div>
-                        <h4 className="font-extrabold text-slate-800 text-sm mt-0.5 flex items-center gap-1.5 flex-wrap">
-                          <span>{associatedClass?.name}</span>
                           {hasActivityToday && (
-                            <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider font-sans">
+                            <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-800 text-[8px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider font-sans flex-shrink-0">
                               Atividade
                             </span>
                           )}
-                        </h4>
-                        <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                          <span className={`w-1.5 h-1.5 rounded-full ${schoolPalette.bg}`} />
-                          {associatedSchool?.name} ({SHIFT_LABELS[slot.shift]})
-                        </span>
+                        </div>
+                        
+                        <div className="text-[10px] text-slate-500 flex items-center gap-1.5 mt-0.5 flex-wrap leading-normal">
+                          <span className={`font-bold truncate max-w-[120px] ${subjectPalette.text}`}>{associatedSubject?.name}</span>
+                          <span className="text-slate-300">•</span>
+                          <span className="flex items-center gap-1 truncate max-w-[150px]">
+                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${schoolPalette.bg}`} />
+                            <span className="font-medium text-slate-400 truncate">{associatedSchool?.name}</span>
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="text-right font-mono flex-shrink-0 border-l border-slate-100 pl-3">
-                      <span className="text-sm font-bold text-slate-700">{slot.startTime}</span>
-                      <span className="block text-[10px] text-slate-400">Até {slot.endTime}</span>
+                    <div className="text-right font-mono flex-shrink-0 border-l border-slate-100 pl-2.5">
+                      <span className="text-xs font-bold text-slate-700 block leading-tight">{slot.startTime}</span>
+                      <span className="text-[9px] text-slate-400 block leading-tight mt-0.5">Até {slot.endTime}</span>
                     </div>
                   </div>
                 );
@@ -515,9 +517,9 @@ export default function Dashboard({
                           </div>
 
                           <div className="grid grid-cols-2 gap-2.5">
-                            {/* Subject */}
+                            {/* Subject / Componente */}
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Disciplina *</label>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Componente Curricular *</label>
                               <select
                                 value={newActSubjectId}
                                 onChange={e => setNewActSubjectId(e.target.value)}

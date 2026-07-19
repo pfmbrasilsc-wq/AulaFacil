@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { School, ClassGroup, Subject, TimeSlot } from '../types';
 import { COLOR_PALETTE, getPaletteColor } from '../utils/storage';
-import { Plus, Trash2, Edit2, X, Clock, Calendar, Check, AlertCircle, Copy, MoveRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Clock, Calendar, Check, AlertCircle, Copy, MoveRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface GradeAulasProps {
@@ -64,9 +64,6 @@ export default function GradeAulas({
 }: GradeAulasProps) {
   const [selectedShift, setSelectedShift] = useState<'Manhã' | 'Tarde' | 'Noite'>('Manhã');
   const [showSaturday, setShowSaturday] = useState<boolean>(false);
-  
-  // Mobile day selection (defaults to Monday / 1)
-  const [selectedDayMobile, setSelectedDayMobile] = useState<number>(1);
 
   // Modal / Form state for scheduling a slot
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -106,7 +103,7 @@ export default function GradeAulas({
   // Open modal to Add
   const handleAddClick = (day: number, shift: 'Manhã' | 'Tarde' | 'Noite', slot: number) => {
     if (classes.length === 0 || subjects.length === 0) {
-      alert('Por favor, cadastre primeiro as turmas e disciplinas na aba de "Cadastros"!');
+      alert('Por favor, cadastre primeiro as turmas e os componentes curriculares na aba de "Cadastros"!');
       return;
     }
 
@@ -175,7 +172,7 @@ export default function GradeAulas({
       return;
     }
     if (!modalData.subjectId) {
-      setFormError('Selecione uma disciplina.');
+      setFormError('Selecione um componente curricular.');
       return;
     }
     if (!modalData.startTime || !modalData.endTime) {
@@ -244,171 +241,38 @@ export default function GradeAulas({
     }
   };
 
-  // Copy entire schedule of one day to another day (Quick action helper)
-  const [copySourceDay, setCopySourceDay] = useState<number | ''>('');
-  const [copyTargetDay, setCopyTargetDay] = useState<number | ''>('');
-  const [showCopyPanel, setShowCopyPanel] = useState<boolean>(false);
-
-  const handleCopyDaySchedule = () => {
-    if (copySourceDay === '' || copyTargetDay === '') {
-      alert('Selecione os dias de origem e destino.');
-      return;
-    }
-    if (copySourceDay === copyTargetDay) {
-      alert('Os dias de origem e destino devem ser diferentes.');
-      return;
-    }
-
-    const sourceSlots = timeSlots.filter(t => t.dayOfWeek === copySourceDay);
-    if (sourceSlots.length === 0) {
-      alert('O dia de origem não possui nenhuma aula cadastrada.');
-      return;
-    }
-
-    if (confirm(`Isso copiará ${sourceSlots.length} aulas do dia de origem para o dia de destino. Aulas conflitantes no dia de destino serão ignoradas. Confirmar?`)) {
-      const newSlots: TimeSlot[] = [];
-      sourceSlots.forEach(src => {
-        // check conflict on target day
-        const hasConflict = timeSlots.some(
-          t => t.dayOfWeek === copyTargetDay && t.shift === src.shift && t.slotNumber === src.slotNumber
-        );
-        if (!hasConflict) {
-          newSlots.push({
-            ...src,
-            id: `slot-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-            dayOfWeek: copyTargetDay as number,
-          });
-        }
-      });
-
-      if (newSlots.length > 0) {
-        setTimeSlots(prev => [...prev, ...newSlots]);
-        onDataChanged();
-        alert(`${newSlots.length} aulas copiadas com sucesso!`);
-      } else {
-        alert('Nenhuma aula copiada pois todos os horários do dia de destino já estavam ocupados.');
-      }
-      setShowCopyPanel(false);
-    }
-  };
-
   return (
-    <div id="grade-aulas-container" className="space-y-6">
-      {/* Upper Filters Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs">
-        {/* Shift Filter buttons */}
-        <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100 gap-1 self-start md:self-auto">
-          {(['Manhã', 'Tarde', 'Noite'] as const).map(shift => (
-            <button
-              key={shift}
-              id={`shift-filter-${shift}`}
-              onClick={() => setSelectedShift(shift)}
-              className={`py-2 px-4 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                selectedShift === shift
-                  ? 'bg-white text-indigo-600 font-bold shadow-xs border border-slate-100'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              {SHIFT_LABELS[shift]}
-            </button>
-          ))}
-        </div>
-
-        {/* Quick Utilities */}
-        <div className="flex flex-wrap items-center gap-3">
+    <div id="grade-aulas-container" className="space-y-4">
+      {/* Shift/Turn tabs above the timetable */}
+      <div className="flex border-b border-slate-200 gap-1">
+        {(['Manhã', 'Tarde', 'Noite'] as const).map(shift => (
           <button
-            id="toggle-saturday"
-            onClick={() => setShowSaturday(prev => !prev)}
-            className={`py-2 px-3.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-              showSaturday
-                ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            key={shift}
+            id={`shift-tab-${shift}`}
+            onClick={() => setSelectedShift(shift)}
+            className={`py-2 px-5 sm:py-2.5 sm:px-7 text-xs sm:text-sm font-bold border-b-2 -mb-[2px] transition-all cursor-pointer ${
+              selectedShift === shift
+                ? 'border-indigo-600 text-indigo-600 font-extrabold'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            {showSaturday ? 'Ocultar Sábado' : 'Mostrar Sábado'}
+            {SHIFT_LABELS[shift]}
           </button>
-
-          <button
-            id="toggle-copy-panel"
-            onClick={() => setShowCopyPanel(prev => !prev)}
-            className="py-2 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-200"
-          >
-            <Copy size={14} />
-            <span>Duplicar Dia</span>
-          </button>
-        </div>
+        ))}
       </div>
 
-      {/* Copy Day Dialog Panel */}
-      <AnimatePresence>
-        {showCopyPanel && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="bg-indigo-50/50 p-5 rounded-3xl border border-indigo-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-                <span className="text-sm font-semibold text-indigo-800">Copiar aulas de:</span>
-                <select
-                  value={copySourceDay}
-                  onChange={e => setCopySourceDay(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="px-3 py-2 bg-white border border-indigo-200 rounded-xl text-sm text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 w-full sm:w-40"
-                >
-                  <option value="">Selecione...</option>
-                  {DAYS_OF_WEEK.map(d => (
-                    <option key={d.value} value={d.value}>{d.label}</option>
-                  ))}
-                </select>
-
-                <MoveRight size={18} className="text-indigo-500 hidden sm:block" />
-
-                <span className="text-sm font-semibold text-indigo-800">Para o dia:</span>
-                <select
-                  value={copyTargetDay}
-                  onChange={e => setCopyTargetDay(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="px-3 py-2 bg-white border border-indigo-200 rounded-xl text-sm text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 w-full sm:w-40"
-                >
-                  <option value="">Selecione...</option>
-                  {DAYS_OF_WEEK.map(d => (
-                    <option key={d.value} value={d.value}>{d.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <button
-                  onClick={handleCopyDaySchedule}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-xs transition-all cursor-pointer"
-                >
-                  Confirmar Cópia
-                </button>
-                <button
-                  onClick={() => setShowCopyPanel(false)}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm transition-all cursor-pointer"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* TIMETABLE LAYOUT */}
-
-      {/* Desktop view (visible on medium screens and up) */}
-      <div id="desktop-grid" className="hidden md:block bg-white rounded-3xl border border-slate-200 shadow-xs overflow-x-auto">
-        <table className="w-full min-w-[800px] border-collapse table-fixed">
+      {/* UNIFIED TIMETABLE LAYOUT - Fits perfectly in a single screen */}
+      <div id="unified-timetable-grid" className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden w-full">
+        <table className="w-full border-collapse table-fixed">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/50">
-              <th className="w-28 py-4 px-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
+              <th className="w-12 sm:w-28 py-2 px-1 sm:py-3 sm:px-2 text-center sm:text-left text-[9px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
                 Horário
               </th>
               {filteredDays.map(day => (
-                <th key={day.value} className="py-4 px-3 text-center text-sm font-bold text-slate-700">
-                  {day.label}
+                <th key={day.value} className="py-2 px-1 sm:py-3 sm:px-2 text-center text-xs sm:text-sm font-extrabold text-slate-700">
+                  <span className="hidden sm:inline">{day.label}</span>
+                  <span className="inline sm:hidden">{day.short}</span>
                 </th>
               ))}
             </tr>
@@ -417,13 +281,12 @@ export default function GradeAulas({
             {slotRange.map(slotNum => {
               const preset = DEFAULT_TIME_PRESETS[selectedShift].find(p => p.slot === slotNum) || { start: '--:--', end: '--:--' };
               return (
-                <tr key={slotNum} className="group hover:bg-slate-50/20 transition-all">
+                <tr key={slotNum} className="group hover:bg-slate-50/10 transition-all">
                   {/* Time column */}
-                  <td className="py-5 px-3 font-mono border-r border-slate-100">
-                    <span className="block text-sm font-bold text-slate-700">{slotNum}ª Aula</span>
-                    <span className="block text-xs text-slate-400 mt-1 flex items-center gap-1">
-                      <Clock size={12} />
-                      {preset.start} - {preset.end}
+                  <td className="py-1.5 px-0.5 sm:py-3 sm:px-2 font-mono border-r border-slate-100 text-center sm:text-left">
+                    <span className="block text-[10px] sm:text-sm font-bold text-slate-700 leading-tight">{slotNum}ª Aula</span>
+                    <span className="block text-[8px] sm:text-xs text-slate-400 mt-0.5 font-semibold leading-tight">
+                      {preset.start}
                     </span>
                   </td>
 
@@ -438,32 +301,32 @@ export default function GradeAulas({
                     const schoolPalette = associatedSchool ? getPaletteColor(associatedSchool.color) : COLOR_PALETTE[0];
 
                     return (
-                      <td key={day.value} className="p-2 border-r border-slate-100 last:border-r-0 align-middle">
+                      <td key={day.value} className="p-0.5 sm:p-1.5 border-r border-slate-100 last:border-r-0 align-middle">
                         {scheduledSlot ? (
                           <div
                             onClick={() => handleEditClick(scheduledSlot)}
-                            className={`group/card cursor-pointer p-3 rounded-2xl border ${subjectPalette.border} ${subjectPalette.lightBg} hover:shadow-xs hover:scale-[1.01] active:scale-[0.99] transition-all text-left relative min-h-[105px] flex flex-col justify-between`}
+                            className={`group/card cursor-pointer p-1 sm:p-2.5 rounded-lg sm:rounded-xl border ${subjectPalette.border} ${subjectPalette.lightBg} hover:shadow-xs hover:scale-[1.01] active:scale-[0.99] transition-all text-left relative min-h-[46px] sm:min-h-[85px] flex flex-col justify-between`}
                           >
-                            <div>
-                              <div className="flex items-center justify-between gap-1 mb-1">
-                                <span className={`text-xs font-bold ${subjectPalette.text} truncate max-w-[120px]`}>
+                            <div className="min-w-0">
+                              <div className="flex items-center justify-between gap-1 mb-0.5">
+                                <span className={`text-[8px] sm:text-[10px] font-bold ${subjectPalette.text} truncate max-w-[42px] sm:max-w-[120px]`}>
                                   {associatedSubject?.name}
                                 </span>
-                                <span className="text-[10px] bg-white/80 px-1 py-0.5 rounded-sm border border-slate-150 text-slate-500 font-mono">
+                                <span className="hidden sm:inline text-[9px] bg-white/80 px-1 py-0.5 rounded-sm border border-slate-150 text-slate-500 font-mono">
                                   {scheduledSlot.startTime}
                                 </span>
                               </div>
-                              <h4 className="text-sm font-extrabold text-slate-800 leading-tight">
+                              <h4 className="text-[9px] sm:text-xs font-extrabold text-slate-800 leading-tight truncate sm:whitespace-normal sm:line-clamp-2">
                                 {associatedClass?.name}
                               </h4>
                             </div>
                             
-                            <div className="mt-2 pt-2 border-t border-slate-100/35 flex items-center justify-between">
-                              <span className="text-[10px] text-slate-500 truncate max-w-[110px] flex items-center gap-1 font-medium">
-                                <span className={`w-1.5 h-1.5 rounded-full ${schoolPalette.bg}`} />
-                                {associatedSchool?.name}
+                            <div className="mt-0.5 pt-0.5 border-t border-slate-100/35 flex items-center justify-between min-w-0">
+                              <span className="text-[7.5px] sm:text-[10px] text-slate-500 truncate max-w-[42px] sm:max-w-[110px] flex items-center gap-0.5 sm:gap-1 font-medium">
+                                <span className={`w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full flex-shrink-0 ${schoolPalette.bg}`} />
+                                <span className="truncate">{associatedSchool?.name}</span>
                               </span>
-                              <span className="opacity-0 group-hover/card:opacity-100 text-[10px] text-indigo-600 font-bold flex items-center gap-0.5 transition-all">
+                              <span className="hidden lg:inline opacity-0 group-hover/card:opacity-100 text-[9px] text-indigo-600 font-bold transition-all">
                                 Editar
                               </span>
                             </div>
@@ -471,10 +334,10 @@ export default function GradeAulas({
                         ) : (
                           <button
                             onClick={() => handleAddClick(day.value, selectedShift, slotNum)}
-                            className="w-full py-6 px-3 border border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl flex flex-col items-center justify-center text-slate-300 hover:text-indigo-600 hover:bg-indigo-50/20 transition-all cursor-pointer group/add gap-1 min-h-[105px]"
+                            className="w-full py-2 sm:py-5 px-0.5 sm:px-2 border border-dashed border-slate-200 hover:border-indigo-400 rounded-lg sm:rounded-xl flex flex-col items-center justify-center text-slate-300 hover:text-indigo-600 hover:bg-indigo-50/25 transition-all cursor-pointer group/add gap-0.5 min-h-[46px] sm:min-h-[85px]"
                           >
-                            <Plus size={16} className="scale-100 group-hover/add:scale-110 transition-all" />
-                            <span className="text-xs font-bold text-slate-400 group-hover/add:text-indigo-600">Livre</span>
+                            <Plus size={10} className="scale-100 group-hover/add:scale-110 transition-all text-slate-400 sm:text-slate-300" />
+                            <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 group-hover/add:text-indigo-600">Livre</span>
                           </button>
                         )}
                       </td>
@@ -485,111 +348,19 @@ export default function GradeAulas({
             })}
           </tbody>
         </table>
-      </div>
 
-      {/* Mobile view (visible on screens smaller than md) */}
-      <div id="mobile-grid" className="block md:hidden space-y-4">
-        {/* Day Selector Tabs for mobile */}
-        <div className="flex items-center justify-between bg-white p-2 rounded-3xl border border-slate-200/80 shadow-xs gap-2">
-          <button
-            onClick={() => setSelectedDayMobile(prev => prev > 1 ? prev - 1 : 6)}
-            className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500 transition-all cursor-pointer"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          
-          <div className="flex-1 text-center">
-            <span className="text-sm font-extrabold text-slate-800">
-              {DAYS_OF_WEEK.find(d => d.value === selectedDayMobile)?.label}
-            </span>
-          </div>
-
-          <button
-            onClick={() => setSelectedDayMobile(prev => prev < 6 ? prev + 1 : 1)}
-            className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500 transition-all cursor-pointer"
-          >
-            <ChevronRight size={20} />
-          </button>
-        </div>
-
-        {/* Small quick tab dots */}
-        <div className="flex justify-center gap-1.5 py-1">
-          {filteredDays.map(d => (
-            <button
-              key={d.value}
-              onClick={() => setSelectedDayMobile(d.value)}
-              className={`px-3 py-1 text-xs rounded-full transition-all cursor-pointer ${
-                selectedDayMobile === d.value
-                  ? 'bg-indigo-600 text-white font-bold'
-                  : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              {d.short}
-            </button>
-          ))}
-        </div>
-
-        {/* Vertical list of slots for the chosen day on mobile */}
-        <div className="space-y-3 bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
-          {slotRange.map(slotNum => {
-            const scheduledSlot = findTimeSlot(selectedDayMobile, selectedShift, slotNum);
-            const preset = DEFAULT_TIME_PRESETS[selectedShift].find(p => p.slot === slotNum) || { start: '--:--', end: '--:--' };
-            
-            const associatedClass = scheduledSlot ? classes.find(c => c.id === scheduledSlot.classGroupId) : null;
-            const associatedSchool = associatedClass ? schools.find(s => s.id === associatedClass.schoolId) : null;
-            const associatedSubject = scheduledSlot ? subjects.find(s => s.id === scheduledSlot.subjectId) : null;
-
-            const subjectPalette = associatedSubject ? getPaletteColor(associatedSubject.color) : COLOR_PALETTE[0];
-            const schoolPalette = associatedSchool ? getPaletteColor(associatedSchool.color) : COLOR_PALETTE[0];
-
-            return (
-              <div
-                key={slotNum}
-                className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
-                  scheduledSlot
-                    ? `${subjectPalette.border} ${subjectPalette.lightBg}`
-                    : 'border-slate-100 bg-slate-50/40'
-                }`}
-              >
-                {/* Time Indicator */}
-                <div className="w-16 flex-shrink-0 font-mono text-center border-r border-slate-150 pr-2">
-                  <span className="block text-xs font-bold text-slate-700">{slotNum}ª Aula</span>
-                  <span className="block text-[10px] text-slate-400 mt-0.5">{preset.start}</span>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  {scheduledSlot ? (
-                    <div onClick={() => handleEditClick(scheduledSlot)} className="cursor-pointer">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`text-xs font-extrabold ${subjectPalette.text}`}>
-                          {associatedSubject?.name}
-                        </span>
-                        <span className="text-[9px] bg-white px-1 rounded border border-slate-100 text-slate-400">
-                          {scheduledSlot.startTime} - {scheduledSlot.endTime}
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-bold text-slate-800 truncate mt-0.5">
-                        {associatedClass?.name}
-                      </h4>
-                      <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1 truncate">
-                        <span className={`w-1.5 h-1.5 rounded-full ${schoolPalette.bg}`} />
-                        {associatedSchool?.name}
-                      </p>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleAddClick(selectedDayMobile, selectedShift, slotNum)}
-                      className="w-full py-3 px-4 border border-dashed border-slate-200 hover:border-indigo-400 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50/10 flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold"
-                    >
-                      <Plus size={14} />
-                      <span>Agendar Horário Vago</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+        {/* Footer with Saturday checkbox */}
+        <div className="flex items-center justify-between bg-slate-50/50 px-4 py-3 border-t border-slate-100 text-slate-500 text-xs mt-auto">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showSaturday}
+              onChange={e => setShowSaturday(e.target.checked)}
+              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+            />
+            <span className="font-semibold text-slate-700">Mostrar Sábado na grade</span>
+          </label>
+          <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">Grade de Aulas Unificada</span>
         </div>
       </div>
 
@@ -713,9 +484,9 @@ export default function GradeAulas({
                   </select>
                 </div>
 
-                {/* Disciplina Selector */}
+                {/* Componente Curricular Selector */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Matéria / Disciplina *</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Componente Curricular *</label>
                   <select
                     value={modalData.subjectId}
                     onChange={e => setModalData(prev => ({ ...prev, subjectId: e.target.value }))}

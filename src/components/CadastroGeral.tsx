@@ -160,11 +160,11 @@ export default function CadastroGeral({
     setErrorMsg(null);
   };
 
-  // Handlers for Subject (Disciplina)
+  // Handlers for Subject (Componente Curricular)
   const handleSubjectSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!subjectForm.name.trim()) {
-      setErrorMsg('O nome da matéria/disciplina é obrigatório.');
+      setErrorMsg('O nome do componente curricular é obrigatório.');
       return;
     }
 
@@ -214,49 +214,49 @@ export default function CadastroGeral({
   return (
     <div id="cadastro-geral-container" className="space-y-6">
       {/* Tab Selector */}
-      <div className="flex border border-slate-200 bg-white p-1.5 rounded-3xl shadow-2xs gap-1 max-w-lg mx-auto md:max-w-none">
+      <div className="flex overflow-x-auto scrollbar-none border border-slate-200 bg-white p-1 rounded-2xl sm:rounded-3xl shadow-2xs gap-1 max-w-full md:max-w-none">
         <button
           id="tab-schools"
           onClick={() => { setActiveTab('schools'); resetSchoolForm(); }}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-sm font-medium transition-all cursor-pointer ${
+          className={`flex-1 min-w-[110px] sm:min-w-0 flex-shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-3 sm:py-3 sm:px-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
             activeTab === 'schools'
               ? 'bg-indigo-600 text-white font-semibold shadow-xs'
               : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
           }`}
         >
-          <SchoolIcon size={18} />
+          <SchoolIcon size={16} className="sm:size-[18px]" />
           <span>Escolas</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-normal ${activeTab === 'schools' ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-normal ${activeTab === 'schools' ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
             {schools.length}
           </span>
         </button>
         <button
           id="tab-classes"
           onClick={() => { setActiveTab('classes'); resetClassForm(); }}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-sm font-medium transition-all cursor-pointer ${
+          className={`flex-1 min-w-[110px] sm:min-w-0 flex-shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-3 sm:py-3 sm:px-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
             activeTab === 'classes'
               ? 'bg-indigo-600 text-white font-semibold shadow-xs'
               : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
           }`}
         >
-          <GraduationCap size={18} />
+          <GraduationCap size={16} className="sm:size-[18px]" />
           <span>Turmas</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-normal ${activeTab === 'classes' ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-normal ${activeTab === 'classes' ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
             {classes.length}
           </span>
         </button>
         <button
           id="tab-subjects"
           onClick={() => { setActiveTab('subjects'); resetSubjectForm(); }}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-sm font-medium transition-all cursor-pointer ${
+          className={`flex-1 min-w-[110px] sm:min-w-0 flex-shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-3 sm:py-3 sm:px-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
             activeTab === 'subjects'
               ? 'bg-indigo-600 text-white font-semibold shadow-xs'
               : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
           }`}
         >
-          <BookOpen size={18} />
-          <span>Disciplinas</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-normal ${activeTab === 'subjects' ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
+          <BookOpen size={16} className="sm:size-[18px]" />
+          <span>Componente</span>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-normal ${activeTab === 'subjects' ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
             {subjects.length}
           </span>
         </button>
@@ -286,7 +286,7 @@ export default function CadastroGeral({
             {activeTab === 'schools' && <SchoolIcon className="text-indigo-600" size={20} />}
             {activeTab === 'classes' && <GraduationCap className="text-indigo-600" size={20} />}
             {activeTab === 'subjects' && <BookOpen className="text-indigo-600" size={20} />}
-            <span>{isEditing ? 'Editar' : 'Cadastrar'} {activeTab === 'schools' ? 'Escola' : activeTab === 'classes' ? 'Turma' : 'Disciplina'}</span>
+            <span>{isEditing ? 'Editar' : 'Cadastrar'} {activeTab === 'schools' ? 'Escola' : activeTab === 'classes' ? 'Turma' : 'Componente'}</span>
           </h3>
 
           {/* TAB 1: SCHOOL FORM */}
@@ -443,7 +443,7 @@ export default function CadastroGeral({
           {activeTab === 'subjects' && (
             <form onSubmit={handleSubjectSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Nome da Matéria / Disciplina *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Componente Curricular *</label>
                 <input
                   type="text"
                   placeholder="Ex: Matemática, Física, História"
@@ -480,7 +480,7 @@ export default function CadastroGeral({
                   className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-xl text-sm font-semibold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {isEditing ? <Check size={18} /> : <Plus size={18} />}
-                  <span>{isEditing ? 'Salvar Alterações' : 'Adicionar Disciplina'}</span>
+                  <span>{isEditing ? 'Salvar Alterações' : 'Adicionar Componente'}</span>
                 </button>
                 {isEditing && (
                   <button
@@ -501,7 +501,7 @@ export default function CadastroGeral({
           <h3 className="text-lg font-extrabold text-slate-800 mb-6 flex items-center gap-2 pb-3 border-b border-slate-100">
             <span>Listagem Cadastrada</span>
             <span className="text-xs font-normal text-slate-400 font-mono">
-              ({activeTab === 'schools' ? 'Escolas' : activeTab === 'classes' ? 'Turmas' : 'Disciplinas'})
+              ({activeTab === 'schools' ? 'Escolas' : activeTab === 'classes' ? 'Turmas' : 'Componentes'})
             </span>
           </h3>
 
@@ -620,7 +620,7 @@ export default function CadastroGeral({
             <div className="space-y-3">
               {subjects.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 text-sm">
-                  Nenhuma disciplina cadastrada ainda. Use o formulário ao lado para começar!
+                  Nenhum componente curricular cadastrado ainda. Use o formulário ao lado para começar!
                 </div>
               ) : (
                 subjects.map(sub => {
@@ -644,14 +644,14 @@ export default function CadastroGeral({
                         <button
                           onClick={() => handleEditSubject(sub)}
                           className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all cursor-pointer"
-                          title="Editar Disciplina"
+                          title="Editar Componente"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteSubject(sub.id)}
                           className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
-                          title="Excluir Disciplina"
+                          title="Excluir Componente"
                         >
                           <Trash2 size={16} />
                         </button>

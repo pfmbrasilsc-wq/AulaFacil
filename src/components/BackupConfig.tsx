@@ -309,7 +309,7 @@ create policy "Exclusão pública" on public.journals for delete using (true);`;
   };
 
   const handleClearAll = () => {
-    if (confirm('ATENÇÃO: Isso removerá absolutamente todas as escolas, turmas, disciplinas, horários e diários registrados permanentemente. Tem certeza absoluta de que quer fazer isso?')) {
+    if (confirm('ATENÇÃO: Isso removerá absolutamente todas as escolas, turmas, componentes curriculares, horários e diários registrados permanentemente. Tem certeza absoluta de que quer fazer isso?')) {
       onImportData({
         schools: [],
         classes: [],

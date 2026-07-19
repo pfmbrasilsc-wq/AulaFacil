@@ -193,7 +193,7 @@ export default function RegistroAtividades({
       return;
     }
     if (newAct.classGroupIds.length === 0 || !newAct.subjectId) {
-      alert('Por favor, certifique-se de vincular a atividade a pelo menos uma turma e disciplina.');
+      alert('Por favor, certifique-se de vincular a atividade a pelo menos uma turma e componente curricular.');
       return;
     }
 
@@ -627,9 +627,9 @@ export default function RegistroAtividades({
                       </div>
                     </div>
 
-                    {/* Subject */}
+                    {/* Subject / Componente */}
                     <div className="md:col-span-4">
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Disciplina</label>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">Componente Curricular</label>
                       <select
                         value={newAct.subjectId}
                         onChange={e => setNewAct(prev => ({ ...prev, subjectId: e.target.value }))}
