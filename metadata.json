@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Planejador de Rotina Pedagógica",
+  "description": "Aplicativo para professores organizarem horários de aula, cadastrarem escolas, turmas, disciplinas e registrarem atividades, tarefas e avaliações.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
