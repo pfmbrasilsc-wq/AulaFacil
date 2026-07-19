@@ -4,6 +4,12 @@ import { COLOR_PALETTE, getPaletteColor } from '../utils/storage';
 import { Plus, Trash2, Edit2, X, Check, School as SchoolIcon, GraduationCap, BookOpen, MapPin, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+const SHIFT_LABELS: Record<'Manhã' | 'Tarde' | 'Noite', string> = {
+  Manhã: 'Matutino',
+  Tarde: 'Vespertino',
+  Noite: 'Noturno',
+};
+
 interface CadastroGeralProps {
   schools: School[];
   setSchools: React.Dispatch<React.SetStateAction<School[]>>;
@@ -149,7 +155,7 @@ export default function CadastroGeral({
   };
 
   const resetClassForm = () => {
-    setClassForm({ id: '', name: '', schoolId: schools[0]?.id || '', shift: 'Manhã' });
+    setClassForm(prev => ({ id: '', name: '', schoolId: prev.schoolId || schools[0]?.id || '', shift: prev.shift || 'Manhã' }));
     setIsEditing(false);
     setErrorMsg(null);
   };
@@ -365,17 +371,6 @@ export default function CadastroGeral({
               ) : (
                 <>
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Nome da Turma / Série *</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: 3º Ano EM - A, 7ª Série B"
-                      value={classForm.name}
-                      onChange={e => setClassForm(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 focus:outline-hidden transition-all text-sm placeholder-slate-400 font-sans font-medium"
-                    />
-                  </div>
-
-                  <div>
                     <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Vincular à Escola *</label>
                     <select
                       value={classForm.schoolId}
@@ -391,7 +386,7 @@ export default function CadastroGeral({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Turno Padrão</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Período (Turno)</label>
                     <div className="grid grid-cols-3 gap-2">
                       {(['Manhã', 'Tarde', 'Noite'] as const).map(shift => (
                         <button
@@ -404,10 +399,21 @@ export default function CadastroGeral({
                               : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                           }`}
                         >
-                          {shift}
+                          {SHIFT_LABELS[shift]}
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Nome da Turma / Série *</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: 3º Ano EM - A, 7ª Série B"
+                      value={classForm.name}
+                      onChange={e => setClassForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 focus:outline-hidden transition-all text-sm placeholder-slate-400 font-sans font-medium"
+                    />
                   </div>
 
                   <div className="flex gap-2 pt-2">
@@ -577,7 +583,7 @@ export default function CadastroGeral({
                           <div className="flex items-center gap-2">
                             <h4 className="font-bold text-slate-800 text-sm">{cls.name}</h4>
                             <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
-                              {cls.shift}
+                              {SHIFT_LABELS[cls.shift]}
                             </span>
                           </div>
                           <p className="text-xs text-slate-400 mt-1 flex items-center gap-1 font-medium">

@@ -13,6 +13,12 @@ interface GradeAulasProps {
   onDataChanged: () => void;
 }
 
+const SHIFT_LABELS: Record<'Manhã' | 'Tarde' | 'Noite', string> = {
+  Manhã: 'Matutino',
+  Tarde: 'Vespertino',
+  Noite: 'Noturno',
+};
+
 const DAYS_OF_WEEK = [
   { value: 1, label: 'Segunda', short: 'Seg' },
   { value: 2, label: 'Terça', short: 'Ter' },
@@ -303,7 +309,7 @@ export default function GradeAulas({
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              {shift}
+              {SHIFT_LABELS[shift]}
             </button>
           ))}
         </div>
@@ -605,7 +611,7 @@ export default function GradeAulas({
                   </h3>
                   <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
                     <Calendar size={12} />
-                    {DAYS_OF_WEEK.find(d => d.value === modalData.dayOfWeek)?.label} • {modalData.shift} • {modalData.slotNumber}ª Aula
+                    {DAYS_OF_WEEK.find(d => d.value === modalData.dayOfWeek)?.label} • {SHIFT_LABELS[modalData.shift]} • {modalData.slotNumber}ª Aula
                   </p>
                 </div>
                 <button
@@ -646,9 +652,9 @@ export default function GradeAulas({
                       onChange={e => handleModalShiftChange(e.target.value as 'Manhã' | 'Tarde' | 'Noite')}
                       className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                     >
-                      <option value="Manhã">Manhã</option>
-                      <option value="Tarde">Tarde</option>
-                      <option value="Noite">Noite</option>
+                      <option value="Manhã">Matutino</option>
+                      <option value="Tarde">Vespertino</option>
+                      <option value="Noite">Noturno</option>
                     </select>
                   </div>
                 </div>

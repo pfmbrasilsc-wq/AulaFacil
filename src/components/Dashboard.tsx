@@ -51,6 +51,13 @@ export default function Dashboard({
   // State for selected period/shift filter for classes
   const [selectedShift, setSelectedShift] = React.useState<'Todos' | 'Manhã' | 'Tarde' | 'Noite'>('Todos');
 
+  const SHIFT_LABELS: Record<'Todos' | 'Manhã' | 'Tarde' | 'Noite', string> = {
+    Todos: 'Todos',
+    Manhã: 'Matutino',
+    Tarde: 'Vespertino',
+    Noite: 'Noturno',
+  };
+
   // Selection states for class-group and subject on the selected date
   const [selectedClassGroupId, setSelectedClassGroupId] = React.useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = React.useState<string | null>(null);
@@ -289,7 +296,7 @@ export default function Dashboard({
                       : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
-                  {shift}
+                  {SHIFT_LABELS[shift]}
                 </button>
               ))}
             </div>
@@ -299,7 +306,7 @@ export default function Dashboard({
             {dayClasses.length === 0 ? (
               <div className="bg-slate-50 rounded-2xl border border-slate-100 p-8 text-center space-y-2">
                 <p className="text-slate-400 text-sm font-medium">
-                  Não há aulas {selectedShift !== 'Todos' ? `no período da ${selectedShift.toLowerCase()}` : ''} cadastradas para {selectedDayName}.
+                  Não há aulas {selectedShift !== 'Todos' ? `no período ${SHIFT_LABELS[selectedShift].toLowerCase()}` : ''} cadastradas para {selectedDayName}.
                 </p>
                 <button
                   onClick={() => setView('timetable')}
@@ -362,7 +369,7 @@ export default function Dashboard({
                         </h4>
                         <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
                           <span className={`w-1.5 h-1.5 rounded-full ${schoolPalette.bg}`} />
-                          {associatedSchool?.name} ({slot.shift})
+                          {associatedSchool?.name} ({SHIFT_LABELS[slot.shift]})
                         </span>
                       </div>
                     </div>
